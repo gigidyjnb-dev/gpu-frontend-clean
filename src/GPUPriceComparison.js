@@ -250,7 +250,7 @@ export default function GPUPriceComparison() {
         <p style={{ 
           marginTop: "20px", 
           fontSize: "13px", 
-          opacity: 0.8",
+          opacity: 0.8,
           fontStyle: "italic"
         }}>
           🔒 Secure payment via Stripe • No subscription • One-time tip

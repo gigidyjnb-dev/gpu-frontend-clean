@@ -8,7 +8,7 @@ export default function GPUPriceComparison() {
 
   const fetchPrices = async () => {
     try {
-      const backendUrl = 'https://gpu-backend-clean-production-9735.up.railway.app';
+      const backendUrl = 'https://a-processing-solutions.onrender.com';
       const response = await fetch(`${backendUrl}/api/gpu-prices`);
       const data = await response.json();
       setPrices(data);
@@ -37,7 +37,7 @@ export default function GPUPriceComparison() {
     const yourPrice = pricePerHour * markup;
     
     try {
-      const backendUrl = 'https://gpu-backend-clean-production-9735.up.railway.app';
+      const backendUrl = 'https://a-processing-solutions.onrender.com';
       const response = await fetch(`${backendUrl}/checkout`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -61,7 +61,7 @@ export default function GPUPriceComparison() {
 
   const handleDonate = async () => {
     try {
-      const backendUrl = 'https://gpu-backend-clean-production-9735.up.railway.app';
+      const backendUrl = 'https://a-processing-solutions.onrender.com';
       const response = await fetch(`${backendUrl}/donate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -241,21 +241,3 @@ export default function GPUPriceComparison() {
             cursor: "pointer",
             boxShadow: "0 4px 15px rgba(0,0,0,0.2)",
             transition: "all 0.3s ease",
-            letterSpacing: "0.5px"
-          }}
-        >
-          Buy Us a Coffee - $5
-        </button>
-        
-        <p style={{ 
-          marginTop: "20px", 
-          fontSize: "13px", 
-          opacity: 0.8,
-          fontStyle: "italic"
-        }}>
-          🔒 Secure payment via Stripe • No subscription • One-time tip
-        </p>
-      </div>
-    </div>
-  );
-}

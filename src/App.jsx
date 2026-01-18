@@ -308,13 +308,43 @@ const QuoteModal = ({ onClose }) => {
 };
 
 const QuickQuoteResults = ({ formData, onBack }) => {
-  const recommendation = {
-    gpu: 'A100 40GB',
-    provider: 'Vast.ai',
-    basePrice: 1.29,
-    ourPrice: 1.55,
-    totalCost: (1.55 * formData.hours * formData.instances).toFixed(2)
-  };
+  const [loading, setLoading] = useState(true);
+  const [recommendation, setRecommendation] = useState(null);
+
+  useEffect(() => {
+    fetch('https://gpu-backend-clean-production-9735.up.railway.app/api/gpu/quote', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formData)
+    })
+      .then(res => res.json())
+      .then(data => {
+        setRecommendation(data.recommendation);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error(err);
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="text-center py-12">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto mb-4"></div>
+        <p className="text-slate-400">Finding your best price...</p>
+      </div>
+    );
+  }
+
+  if (!recommendation) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-red-400">Error loading quote. Please try again.</p>
+        <button onClick={onBack} className="mt-4 text-blue-400 hover:text-blue-300">← Go Back</button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -344,11 +374,11 @@ const QuickQuoteResults = ({ formData, onBack }) => {
           </div>
           <div className="flex justify-between">
             <span className="text-slate-400">Instances:</span>
-            <span>{formData.instances}x</span>
+            <span>{recommendation.instances}x</span>
           </div>
           <div className="flex justify-between">
             <span className="text-slate-400">Duration:</span>
-            <span>{formData.hours} hours</span>
+            <span>{recommendation.hours} hours</span>
           </div>
           <div className="pt-3 border-t border-slate-700 flex justify-between text-lg font-bold">
             <span>Total Cost:</span>
@@ -368,7 +398,10 @@ const QuickQuoteResults = ({ formData, onBack }) => {
         </div>
       </div>
 
-      <button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white px-6 py-4 rounded-xl font-semibold text-lg transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2">
+      <button 
+        onClick={() => window.location.href = `/checkout?gpu=${recommendation.gpu}&total=${recommendation.totalCost}`}
+        className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white px-6 py-4 rounded-xl font-semibold text-lg transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2"
+      >
         <DollarSign className="w-5 h-5" />
         Proceed to Checkout
       </button>
@@ -493,20 +526,45 @@ const OptimizerFlow = ({ formData, onBack }) => {
 };
 
 const OptimizerResults = ({ formData, optimizerData, onBack }) => {
-  const optimized = {
-    gpu: 'A100 40GB',
-    provider: 'Vast.ai',
-    basePrice: 1.29,
-    ourPrice: 1.55,
-    totalCost: (1.55 * formData.hours * formData.instances).toFixed(2),
-    savings: 79.20
-  };
+  const [loading, setLoading] = useState(true);
+  const [optimized, setOptimized] = useState(null);
+  const [alternatives, setAlternatives] = useState([]);
 
-  const alternatives = [
-    { name: 'H100 80GB', price: 3.47, cost: (3.47 * formData.hours * formData.instances).toFixed(2), waste: 153.60 },
-    { name: 'A100 80GB', price: 2.27, cost: (2.27 * formData.hours * formData.instances).toFixed(2), waste: 57.60 },
-    { name: 'RTX 4090 x2', price: 1.66, cost: (1.66 * formData.hours * formData.instances).toFixed(2), waste: 8.80 }
-  ];
+  useEffect(() => {
+    fetch('https://gpu-backend-clean-production-9735.up.railway.app/api/gpu/optimize', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...formData, ...optimizerData })
+    })
+      .then(res => res.json())
+      .then(data => {
+        setOptimized(data.optimized);
+        setAlternatives(data.alternatives);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error(err);
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="text-center py-12">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-green-500 mx-auto mb-4"></div>
+        <p className="text-slate-400">Analyzing your workload...</p>
+      </div>
+    );
+  }
+
+  if (!optimized) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-red-400">Error running optimization. Please try again.</p>
+        <button onClick={onBack} className="mt-4 text-blue-400 hover:text-blue-300">← Go Back</button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -520,90 +578,84 @@ const OptimizerResults = ({ formData, optimizerData, onBack }) => {
             <Sparkles className="w-8 h-8 text-green-400" />
           </div>
           <div className="flex-1">
-            <h3 className="text-2xl font-bold mb-2 text-green-400">Perfect Match Found!</h3>
-            <p className="text-slate-300">Based on your workload analysis</p>
-          </div>
-        </div>
-
-        <div className="bg-slate-900/50 rounded-lg p-4 mb-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xl font-bold">{optimized.gpu}</span>
-            <span className="text-2xl font-bold text-green-400">${optimized.totalCost}</span>
-          </div>
-          <div className="text-sm text-slate-400">
-            via {optimized.provider} • {formData.instances}x instances • {formData.hours} hours
-          </div>
-        </div>
-
-        <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
-          <div className="text-center">
-            <div className="text-3xl font-bold text-green-400 mb-1">${optimized.savings.toFixed(2)}</div>
-            <div className="text-sm text-slate-300">Saved vs. next best option</div>
-          </div>
-        </div>
+            <h3 className="text-
+<div className="bg-slate-900/50 rounded-lg p-4 mb-4">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-xl font-bold">{optimized.gpu}</span>
+        <span className="text-2xl font-bold text-green-400">${optimized.totalCost}</span>
       </div>
-
-      <div className="bg-slate-800/50 rounded-xl p-6">
-        <h4 className="font-semibold mb-4 flex items-center gap-2">
-          <TrendingDown className="w-5 h-5 text-red-400" />
-          What You Would've Wasted
-        </h4>
-        
-        <div className="space-y-3">
-          {alternatives.map((alt, idx) => (
-            <div key={idx} className="flex items-center justify-between p-3 bg-slate-900/50 rounded-lg border border-slate-700
-">
-              <div>
-                <div className="font-medium">{alt.name}</div>
-                <div className="text-sm text-slate-400">${alt.price}/hr</div>
-              </div>
-              <div className="text-right">
-                <div className="text-slate-300">${alt.cost} total</div>
-                <div className="text-sm text-red-400">+${alt.waste.toFixed(2)} wasted</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="bg-slate-800/50 rounded-xl p-6">
-        <h4 className="font-semibold text-lg mb-4">Transparent Pricing</h4>
-        
-        <div className="space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span className="text-slate-400">Provider Base Rate:</span>
-            <span>${optimized.basePrice}/hour</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-slate-400">Our Service Fee (20%):</span>
-            <span>+${(optimized.ourPrice - optimized.basePrice).toFixed(2)}/hour</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-slate-400">Your Rate:</span>
-            <span className="font-semibold">${optimized.ourPrice}/hour</span>
-          </div>
-          <div className="pt-3 border-t border-slate-700 flex justify-between">
-            <span className="text-slate-400">Instances × Duration:</span>
-            <span>{formData.instances}x × {formData.hours}hrs</span>
-          </div>
-          <div className="flex justify-between text-lg font-bold pt-2 border-t border-slate-700">
-            <span>Final Total:</span>
-            <span className="text-green-400">${optimized.totalCost}</span>
-          </div>
-        </div>
-      </div>
-
-      <button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white px-6 py-4 rounded-xl font-semibold text-lg transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2">
-        <DollarSign className="w-5 h-5" />
-        Proceed to Checkout - ${optimized.totalCost}
-      </button>
-
-      <div className="text-center text-sm text-slate-400">
-        <p>🎉 This optimization was <span className="text-green-400 font-semibold">FREE</span></p>
-        <p className="mt-1">Want this every time you rent? We'll ask at checkout.</p>
+      <div className="text-sm text-slate-400">
+        via {optimized.provider} • {optimized.instances}x instances • {optimized.hours} hours
       </div>
     </div>
-  );
-};
 
-export default GPURentalHomepage;
+    <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
+      <div className="text-center">
+        <div className="text-3xl font-bold text-green-400 mb-1">${optimized.savings.toFixed(2)}</div>
+        <div className="text-sm text-slate-300">Saved vs. next best option</div>
+      </div>
+    </div>
+  </div>
+
+  <div className="bg-slate-800/50 rounded-xl p-6">
+    <h4 className="font-semibold mb-4 flex items-center gap-2">
+      <TrendingDown className="w-5 h-5 text-red-400" />
+      What You Would've Wasted
+    </h4>
+    
+    <div className="space-y-3">
+      {alternatives.map((alt, idx) => (
+        <div key={idx} className="flex items-center justify-between p-3 bg-slate-900/50 rounded-lg border border-slate-700">
+          <div>
+            <div className="font-medium">{alt.name}</div>
+            <div className="text-sm text-slate-400">${alt.price}/hr</div>
+          </div>
+          <div className="text-right">
+            <div className="text-slate-300">${alt.cost} total</div>
+            <div className="text-sm text-red-400">+${alt.waste} wasted</div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+
+  <div className="bg-slate-800/50 rounded-xl p-6">
+    <h4 className="font-semibold text-lg mb-4">Transparent Pricing</h4>
+    
+    <div className="space-y-2 text-sm">
+      <div className="flex justify-between">
+        <span className="text-slate-400">Provider Base Rate:</span>
+        <span>${optimized.basePrice}/hour</span>
+      </div>
+      <div className="flex justify-between">
+        <span className="text-slate-400">Our Service Fee (20%):</span>
+        <span>+${(optimized.ourPrice - optimized.basePrice).toFixed(2)}/hour</span>
+      </div>
+      <div className="flex justify-between">
+        <span className="text-slate-400">Your Rate:</span>
+        <span className="font-semibold">${optimized.ourPrice}/hour</span>
+      </div>
+      <div className="pt-3 border-t border-slate-700 flex justify-between">
+        <span className="text-slate-400">Instances × Duration:</span>
+        <span>{optimized.instances}x × {optimized.hours}hrs</span>
+      </div>
+      <div className="flex justify-between text-lg font-bold pt-2 border-t border-slate-700">
+        <span>Final Total:</span>
+        <span className="text-green-400">${optimized.totalCost}</span>
+      </div>
+    </div>
+  </div>
+
+  <button 
+    onClick={() => window.location.href = `/checkout?gpu=${optimized.gpu}&total=${optimized.totalCost}&optimized=true`}
+    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white px-6 py-4 rounded-xl font-semibold text-lg transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2"
+  >
+    <DollarSign className="w-5 h-5" />
+    Proceed to Checkout - ${optimized.totalCost}
+  </button>
+
+  <div className="text-center text-sm text-slate-400">
+    <p>🎉 This optimization was <span className="text-green-400 font-semibold">FREE</span></p>
+    <p className="mt-1">Want this every time you rent? We'll ask at checkout.</p>
+  </div>
+</div>
